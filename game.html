@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style type="text/css">
+        *{margin: 0;padding: 0;}
+        body{background: black;}
+        div{background: white;width: 600px;margin: 20px auto;}
+    </style>
+    <script type="text/javascript">
+        window.onload = function () {
+            var oC = document.querySelector('#cs');
+            var oGC = oC.getContext('2d');
+            var oImg = new Image();
+            oImg.src = 'img/zuma.jpg';
+            oImg.onload = function () {
+                setInterval(function () {
+                    oGC.clearRect(0,0,oC.width,oC.height);
+
+                    //绘制大圆
+                    oGC.beginPath();
+                    oGC.arc(300,200,200,-90*Math.PI/180,180*Math.PI/180,false);
+                    oGC.stroke();
+                    //绘制中圆
+                    oGC.beginPath();
+                    oGC.arc(260,200,160,180*Math.PI/180,0,false);
+                    oGC.stroke();
+                    //绘制小圆
+                    oGC.beginPath();
+                    oGC.arc(420,198,20,0,360*Math.PI/180,false);
+                    oGC.stroke();
+                    //绘制运动小圆
+                    for(var i = 0;i<ball.length;i++){
+                        oGC.beginPath();
+                        oGC.arc(ball[i].x,ball[i].y,20,0,360*Math.PI/180,false);
+                        oGC.fill();
+                    }
+
+                    //绘制图片
+                    oGC.save();
+                    oGC.translate(290,200);
+                    oGC.rotate(iRotate);
+                    oGC.translate(-37,-37);
+                    oGC.drawImage(oImg,0,0);
+                    oGC.restore();
+                    //射出的小球
+
+                    for(var j = 0;j<aBall.length;j++){
+                        oGC.save();
+                        oGC.beginPath();
+                        oGC.fillStyle = 'red';
+                        oGC.translate(290,200);
+                        oGC.arc(aBall[j].x,aBall[j].y,20,0,360*Math.PI/180,false);
+                        oGC.fill();
+                        oGC.restore();
+                    }
+
+
+                    oGC.save();
+                    oGC.font = '80px impact';
+                    var w = (oC.width-oGC.measureText("简易祖玛").width)/2;
+                    var h = 500;
+                    oGC.shadowOffsetX = 8;
+                    oGC.shadowOffsetY = 8;
+                    oGC.shadowColor = 'orange';
+                    oGC.shadowBlur = 5;
+                    oGC.strokeStyle = 'red';
+                    oGC.strokeText("简易祖玛",w,h);
+                    oGC.restore();
+                },1000/60);
+
+                //改变小圆中心点值，进而改变路径
+                setInterval(function () {
+                    for(var i = 0;i<ball.length;i++){
+                        ball[i].radius++;
+                        //判断是否已到达终点
+                        if(ball[i].radius>=450){
+                            alert('游戏结束了！');
+                            window.location.reload();
+                        }
+                        //小圆走第二个中圆
+                        else if(ball[i].radius>270){
+                            ball[i].x = Math.sin(ball[i].radius*Math.PI/180)*ball[i].r1+ball[i].startX1;
+                            ball[i].y = ball[i].r1 - Math.cos(ball[i].radius*Math.PI/180)*ball[i].r1+ball[i].startY1;
+                        }
+                        //小圆走大圆
+                        else{
+                            ball[i].x = Math.sin(ball[i].radius*Math.PI/180)*ball[i].r+ball[i].startX;
+                            ball[i].y = ball[i].r - Math.cos(ball[i].radius*Math.PI/180)*ball[i].r+ball[i].startY;
+                        }
+                    }
+                },1000/30);
+                var ball = [];
+
+                //产生n个小球
+                setInterval(function () {
+                    ball.push( {
+                        x : 300,
+                        y : 0,
+                        r : 200,
+                        r1 :160,
+                        radius : 0,
+                        startX : 300,
+                        startY : 0,
+                        startX1 : 260,
+                        startY1 : 40
+                    });
+                },1000/2);
+
+                //使图片随鼠标转动
+                var iRotate = 0;
+
+                oC.onmousemove = function (ev) {
+                    var ev = ev || event;
+                    var disX = ev.clientX - oC.offsetLeft;
+                    var disY = ev.clientY - oC.offsetTop;
+                    var a = disX - 290;
+                    var b = disY - 200;
+                    var c = Math.sqrt(a*a+b*b);  //开根号
+                    if(a>0 && b>0){
+                        iRotate =2*Math.PI - Math.asin(a/c);  //sin的逆运算
+                    }
+                    else if(a>0){
+                        iRotate = Math.PI+Math.asin(a/c);  //sin的逆运算
+                    }
+                    if(a<0 && b<0){
+                        iRotate = Math.PI+Math.asin(a/c);
+                    }
+                    else if(a<0){
+                        iRotate =- Math.asin(a/c);
+                    }
+                };
+
+                //使小球随鼠标发出
+                var aBall = [];
+                var timer = null;
+                oC.onmousedown = function (ev) {
+                    clearInterval(timer);
+                    var ev = ev || event;
+                    var disX = ev.clientX - oC.offsetLeft;
+                    var disY = ev.clientY - oC.offsetTop;
+                    aBall.push ({
+                        x : 0,
+                        y : 0,
+                        a : disX - 290,
+                        b : disY - 200
+                    });
+                    timer = setInterval(function () {
+                        for(var z = 0;z<aBall.length;z++){
+                            aBall[z].x += aBall[z].a/50;
+                            aBall[z].y += aBall[z].b/50;
+                        }
+                        //碰撞检测
+                        for(var j = 0;j<aBall.length;j++) {
+                            for(var i = 0;i<ball.length;i++){
+                                if(pz(ball[i].x,ball[i].y,(aBall[j].x+290),(aBall[j].y+200))){
+                                    aBall.splice(j,1);
+                                    ball.splice(i,1);
+                                    break;
+                                }
+                            }
+                        }
+                    },1000/60);
+                };
+            };
+            //碰撞检测
+            function pz(x1,y1,x2,y2) {
+                var a = x1 - x2;
+                var b = y1 - y2;
+                var c = Math.sqrt(a*a+b*b);
+                if(c<40){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<div>
+    <canvas id="cs" width="600px" height="600px"></canvas>
+</div>
+</body>
+</html>
